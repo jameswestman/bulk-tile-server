@@ -69,6 +69,9 @@ app.get("/:id/:z(\\d+)/:x(\\d+)/:y(\\d+).:ext([\\w\\.]+)", async (req, res) => {
 
   if (!(id in sources)) {
     res.status(404);
+    res.json({
+      error: `source '${id}' not found`,
+    });
     return;
   }
 
@@ -97,6 +100,9 @@ app.get("/:id/:z(\\d+)/:x(\\d+)/:y(\\d+).:ext([\\w\\.]+)", async (req, res) => {
       break;
     default:
       res.status(404);
+      res.json({
+        error: `extension '${ext}' not supported`,
+      });
       return;
   }
 
