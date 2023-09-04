@@ -1,6 +1,7 @@
 "use strict";
 
 import MBTiles from "@mapbox/mbtiles";
+import compression from "compression";
 import express from "express";
 import fs from "node:fs";
 import { parseArgs, promisify } from "node:util";
@@ -35,6 +36,7 @@ const { values: args } = parseArgs({
 const app = express();
 
 app.disable("x-powered-by");
+app.use(compression())
 
 app.get("/", (req, res) => {
   res.send("Bulk tile server is running");
