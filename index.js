@@ -61,6 +61,8 @@ if (args.config) {
   }
 }
 
+const sizeCache = {};
+
 app.get("/:id/:z(\\d+)/:x(\\d+)/:y(\\d+).:ext([\\w\\.]+)", async (req, res) => {
   const { id, ext } = req.params;
   const tileZ = parseInt(req.params.z);
@@ -106,6 +108,18 @@ app.get("/:id/:z(\\d+)/:x(\\d+)/:y(\\d+).:ext([\\w\\.]+)", async (req, res) => {
       return;
   }
 
+  const cacheKey = `${id}/${tileZ}/${tileX}/${tileY}`;
+
+  /* For HEAD requests, return a cached Content-Length if available
+     and skip computing a result that will be discarded */
+  if (req.method === "HEAD") {
+    if (cacheKey in sizeCache) {
+      res.set("Content-Length", sizeCache[cacheKey]);
+      res.end();
+      return;
+    }
+  }
+
   const tarStream = TarStream.pack();
   if (stream) tarStream.pipe(stream);
   else stream = tarStream;
@@ -115,7 +129,9 @@ app.get("/:id/:z(\\d+)/:x(\\d+)/:y(\\d+).:ext([\\w\\.]+)", async (req, res) => {
     bufs.push(data);
   });
   stream.on("end", () => {
-    res.send(Buffer.concat(bufs));
+    const buf = Buffer.concat(bufs);
+    res.send(buf);
+    sizeCache[cacheKey] = buf.length;
   });
 
   for (let z = tileZ; z <= source_info.maxzoom; z++) {
